@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        .application {
+            font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI",
+            Roboto, "Helvetica Neue", "微軟雅黑", "Microsoft YaHei", "微軟正黑體",
+            "Microsoft JhengHei", Verdana, Arial, sans-serif !important;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
+    <title>TW - NL Server 懲戒紀錄</title>
+</head>
+
+<div id="app">
+    <v-app>
+        <v-content>
+            <v-container>
+                <v-card>
+                    <v-toolbar class="elevation-0">
+                        <v-text-field outline hide-details single-line prepend-inner-icon="search" label="搜尋" v-model="search"></v-text-field>
+                        <v-spacer></v-spacer>
+                        <v-btn icon :disabled="loading" @click="refresh">
+                            <v-progress-circular indeterminate color="primary" v-if="loading" :size="25" :width="2"></v-progress-circular>
+                            <v-icon v-else>
+                                refresh
+                            </v-icon>
+                        </v-btn>
+                    </v-toolbar>
+                    <v-data-table :headers="headers" :items="records" class="elevation-1" :pagination.sync="pagination" rows-per-page-text="每頁記錄數："
+                        no-results-text="沒有找到匹配記錄" no-data-text="無可用數據" :search="search">
+                        <template slot="items" slot-scope="props">
+                            <td>{{ props.item.id }}</td>
+                            <td>{{ props.item.name }}</td>
+                            <td>{{ props.item.cause }}</td>
+                            <td>{{ props.item.operator }}</td>
+                            <td>{{ props.item.time }}</td>
+                        </template>
+                    </v-data-table>
+                </v-card>
+            </v-container>
+        </v-content>
+    </v-app>
+</div>
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+
+<script>
+    new Vue({
+        el: "#app",
+        created() {
+            this.refresh();
+        },
+        methods: {
+            refresh() {
+                this.loading = true;
+                axios.get("https://cors-anywhere.herokuapp.com/tw-nl.com/blacklist/index.php").then(resp => {
+                    this.records = []
+                    $("tbody tr", resp.data).each((rIdx, row) => {
+                        let rowObj = $("td", row);
+                        let id = $(rowObj[0]).text()
+                        let name = $(rowObj[1]).text()
+                        let cause = $(rowObj[2]).text()
+                        let operator = $(rowObj[3]).text()
+                        let time = $(rowObj[4]).text()
+                        this.records.push({
+                            id, name, cause, operator, time
+                        })
+                    })
+                    this.loading = false;
+                })
+            }
+        },
+        data() {
+            return {
+                loading: true,
+                search: "",
+                pagination: {
+                    sortBy: "id",
+                    descending: true,
+                    rowsPerPage: 25
+                },
+                headers: [
+                    { text: "#", value: "id" },
+                    {
+                        text: "名稱",
+                        value: "name"
+                    },
+                    {
+                        text: "原因", value: "cause",
+                    },
+                    {
+                        text: "操作人員", value: "operator",
+                    },
+                    {
+                        text: "操作時間", value: "time",
+                    },
+                ],
+                records: []
+            }
+        }
+    })
+
+</script>
+
+</html>
